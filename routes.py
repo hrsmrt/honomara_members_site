@@ -544,16 +544,74 @@ def after_confirm():
 
 @app.route('/result/')
 def result():
-    per_page = 20
-    page_disp_msg = '{total}件中 {start}件 - {end}件'
-    page = request.args.get('page') or 1
-    page = max([1, int(page)])
-    results = Race.query.join(Course).order_by(
-        Race.date.desc(), text("course.competition_id"))
-    pagination = Pagination(page=page, total=results.count(
-    ), per_page=per_page, css_framework='bootstrap4', display_msg=page_disp_msg)
-    return render_template('result.html', results=results.paginate(
-        page, per_page), pagination=pagination)
+    results = Result.query.join(Result.race).join(Race.course)
+
+    if request.args.get('submit') == "検索":
+        race_type = request.args.get('race_type')
+        order = request.args.get('order')
+
+        # 距離による条件分岐
+        if race_type == "フルマラソン":
+            results = results.filter(Course.distance == 42.195)
+        elif race_type == "ハーフマラソン":
+            results = results.filter(Course.distance == 21.0975)
+        elif race_type == "100キロマラソン":
+            results = results.filter(Course.distance == 100)
+        elif race_type == "5キロ":
+            results = results.filter(Course.distance == 5)
+        elif race_type == "10キロ":
+            results = results.filter(Course.distance == 10)
+        else:
+            results = results.filter(Course.distance.notin_([42.195, 21.0975, 100]))
+
+        count = results.count()
+        if count > 0:
+            flash(f'{count}件ヒットしました', 'info')
+        else:
+            flash('ヒットしませんでした', 'danger')
+        per_page = 20
+        page_disp_msg = '{total}件中 {start}件 - {end}件'
+        page = request.args.get('page', 1, type=int)
+        page = max(1, page)
+
+        pagination = Pagination(
+            page=page,
+            total=count,
+            per_page=per_page,
+            css_framework='bootstrap4',
+            display_msg=page_disp_msg
+        )
+
+        if order == "date":
+            results = results.order_by(Race.date.desc()).paginate(page=page, per_page=per_page)
+        elif order == "time":
+            results = results.order_by(Result.time.asc()).paginate(page=page, per_page=per_page)
+
+        return render_template('result.html', results=results, pagination=pagination)
+        
+    else:
+        per_page = 20
+        page_disp_msg = '{total}件中 {start}件 - {end}件'
+
+        # クエリパラメータ 'page' を取得し、int化 & 1以上に制限
+        page = request.args.get('page', 1, type=int)
+        if page < 1:
+            page = 1
+
+        # クエリ構築
+        base_query = Race.query.join(Course).order_by(
+            Race.date.desc(), Course.competition_id
+        )
+
+        # ページネーション実行
+        pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return render_template(
+            'result.html',
+            results=pagination.items,  # 表示対象データ
+            pagination=pagination,
+            page_disp_msg=page_disp_msg
+        )
 
 
 @app.route('/competition/')

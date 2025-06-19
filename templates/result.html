@@ -33,8 +33,36 @@
           {{ pagination.links }}
         </div>
       </div>
+      {% if request.args.get('submit') == '検索' %}
+      {% for result in results %}
+      <div class="borders clearfix">
+        <p style="font-size: 1.2em; margin-bottom: 3px;" class="col-xs-5 col-sm-3 col-lg-2">
+                  {% for m in result.participants -%}
+                  <span {% if m.sex == 1 or m.sex == 'female' %} style="color: red;" {% endif %}>
+                    {{ m.show_name }}
+                  </span>
+                  {% if request.args.get('race_type') == 'その他' %}
+                  <p style="font-size: 1.2em; margin-bottom: 3px;" class="col-xs-3 col-sm-2 col-lg-2 ">
+                  {{result.race.course.distance }} km
+                </p>
+                  {% endif %}
+                  <p style="font-size: 1.2em; margin-bottom: 3px;" class="col-xs-3 col-sm-2 col-lg-2 ">
+                  {{result.time|fmt_time}}
+                </p>
+                  <p style="font-size: 1.2em; margin-bottom: 3px;" class="col-xs-5 col-sm-3 col-lg-4">
+          {{ result.race.course.competition.name }}
+        </p>
+                  {% endfor %}
+                </p>
+                <p style="font-size: 1.2em; margin-bottom: 3px;" class="col-xs-5 col-sm-3 col-lg-2">
+          {{ result.race.date }}
+        </p>
+      </div>
+      {% endfor %}
+
+      {% else %}
       <div class="row">
-        {% for race in results.items %}
+        {% for race in results %}
         {% if len(race.results) > 0 or current_user.is_authenticated %}
         <div class="bs-component">
           <div class="panel panel-default">
@@ -122,6 +150,7 @@
           {{ pagination.links }}
         </div>
       </div>
+      {% endif %}
     </div>
   </div>
   {% endblock %}
