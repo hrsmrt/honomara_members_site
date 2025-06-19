@@ -562,7 +562,8 @@ def result():
         elif race_type == "10キロ":
             results = results.filter(Course.distance == 10)
         else:
-            results = results.filter(Course.distance.notin_([42.195, 21.0975, 100]))
+            results = results.filter(
+                Course.distance.notin_([42.195, 21.0975, 100]))
 
         count = results.count()
         if count > 0:
@@ -583,12 +584,19 @@ def result():
         )
 
         if order == "date":
-            results = results.order_by(Race.date.desc()).paginate(page=page, per_page=per_page)
+            results = results.order_by(
+                Race.date.desc()).paginate(
+                page=page,
+                per_page=per_page)
         elif order == "time":
-            results = results.order_by(Result.time.asc()).paginate(page=page, per_page=per_page)
+            results = results.order_by(
+                Result.time.asc()).paginate(
+                page=page,
+                per_page=per_page)
 
-        return render_template('result.html', results=results, pagination=pagination)
-        
+        return render_template(
+            'result.html', results=results, pagination=pagination)
+
     else:
         per_page = 20
         page_disp_msg = '{total}件中 {start}件 - {end}件'
@@ -604,7 +612,8 @@ def result():
         )
 
         # ページネーション実行
-        pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
+        pagination = base_query.paginate(
+            page=page, per_page=per_page, error_out=False)
 
         return render_template(
             'result.html',
